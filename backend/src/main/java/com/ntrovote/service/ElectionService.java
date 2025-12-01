@@ -64,4 +64,30 @@ public class ElectionService {
         election.setStatus(status);
         electionRepository.save(election);
     }
+
+    @Transactional
+    public Election finalizeElection(Long electionId) {
+        Election election = getElection(electionId);
+
+        if (election.getStatus() == Election.ElectionStatus.CLOSED) {
+            throw new RuntimeException("Election already finalized");
+        }
+
+        // Find the nominee with the most votes
+        Long winnerId = null;
+        long maxVotes = 0;
+
+        for (Nominee nominee : election.getNominees()) {
+            long count = voteRepository.countByNomineeId(nominee.getId());
+            if (count > maxVotes) {
+                maxVotes = count;
+                winnerId = nominee.getId();
+            }
+        }
+
+        // Set winner and close election
+        election.setWinnerId(winnerId);
+        election.setStatus(Election.ElectionStatus.CLOSED);
+        return electionRepository.save(election);
+    }
 }

@@ -99,4 +99,26 @@ public class ElectionController {
         return ResponseEntity.ok(voteService.getElectionResults(id));
     }
 
+    @PostMapping("/admin/{id}/finalize")
+    public ResponseEntity<?> finalizeElection(@PathVariable Long id) {
+        try {
+            Election election = electionService.finalizeElection(id);
+            return ResponseEntity.ok(Map.of(
+                    "message", "Election finalized",
+                    "winnerId", election.getWinnerId()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/admin/{id}")
+    public ResponseEntity<?> deleteElection(@PathVariable Long id) {
+        try {
+            electionService.deleteElection(id);
+            return ResponseEntity.ok(Map.of("message", "Election deleted"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+
 }

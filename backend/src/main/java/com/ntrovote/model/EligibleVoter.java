@@ -17,7 +17,14 @@ public class EligibleVoter {
     @Column(unique = true, nullable = false)
     private String phoneNumber;
 
+    private String name;
+
     public EligibleVoter(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public EligibleVoter(String phoneNumber, String name) {
+        this.phoneNumber = phoneNumber;
+        this.name = name;
     }
 }

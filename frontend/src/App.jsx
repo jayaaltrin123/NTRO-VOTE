@@ -2,8 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './AuthContext';
 import ProtectedRoute from './ProtectedRoute';
-import UserLogin from './UserLogin';
-import AdminLogin from './AdminLogin';
+import LoginPage from './LoginPage';
 import UserDashboard from './UserDashboard';
 import ElectionVote from './ElectionVote';
 import AdminDashboard from './AdminDashboard';
@@ -16,8 +15,7 @@ function App() {
         <div className="min-h-screen bg-gray-50 text-gray-900">
           <Routes>
             {/* Public Routes */}
-            <Route path="/login" element={<UserLogin />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/login" element={<LoginPage />} />
 
             {/* User Routes */}
             <Route element={<ProtectedRoute role="ROLE_USER" />}>

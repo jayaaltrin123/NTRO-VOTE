@@ -29,6 +29,8 @@ public class Election {
     @Enumerated(EnumType.STRING)
     private ElectionStatus status;
 
+    private Long winnerId; // ID of the winning nominee
+
     @OneToMany(mappedBy = "election", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Nominee> nominees;
 

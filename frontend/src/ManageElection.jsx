@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import api from './api';
+import api, { API_BASE_URL } from './api';
 
 const ManageElection = () => {
     const { id } = useParams();
@@ -98,7 +98,7 @@ const ManageElection = () => {
                         {election.nominees.map(nominee => (
                             <div key={nominee.id} className="flex items-center bg-white p-4 rounded shadow border">
                                 <img
-                                    src={`http://localhost:8080${nominee.imageUrl}`}
+                                    src={`${API_BASE_URL}${nominee.imageUrl}`}
                                     alt={nominee.name}
                                     className="w-16 h-16 object-cover rounded mr-4"
                                 />

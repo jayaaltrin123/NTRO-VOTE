@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import api from './api';
+import api, { API_BASE_URL } from './api';
 
 const ElectionVote = () => {
     const { id } = useParams();
@@ -72,7 +72,7 @@ const ElectionVote = () => {
                         onClick={() => setSelectedNominee(nominee)}
                     >
                         <img
-                            src={`http://localhost:8080${nominee.imageUrl}`}
+                            src={`${API_BASE_URL}${nominee.imageUrl}`}
                             alt={nominee.name}
                             className="w-full h-48 object-cover rounded mb-4"
                         />

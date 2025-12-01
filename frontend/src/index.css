@@ -1,3 +1,67 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    html {
+        /* Ensure full height on all devices */
+        height: 100%;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+        /* Full viewport height and responsive */
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+        /* Better touch scrolling on iOS */
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Ensure inputs and buttons are sized appropriately for touch */
+    input,
+    button,
+    select,
+    textarea {
+        font-size: 16px;
+        /* Prevents zoom on iOS */
+        @apply rounded-md;
+    }
+
+    /* Better mobile tap targets */
+    button,
+    a {
+        min-height: 44px;
+        min-width: 44px;
+    }
+}
+
+/* Responsive container max widths */
+@layer components {
+    .container-responsive {
+        @apply w-full px-4 mx-auto;
+    }
+
+    @media (min-width: 640px) {
+        .container-responsive {
+            @apply max-w-screen-sm px-6;
+        }
+    }
+
+    @media (min-width: 768px) {
+        .container-responsive {
+            @apply max-w-screen-md px-8;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .container-responsive {
+            @apply max-w-screen-lg;
+        }
+    }
+
+    @media (min-width: 1280px) {
+        .container-responsive {
+            @apply max-w-screen-xl;
+        }
+    }
+}
