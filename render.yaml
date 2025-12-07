@@ -3,8 +3,8 @@ services:
   - type: web
     name: ntro-vote-backend
     runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    dockerfilePath: backend/Dockerfile
+    dockerContext: .
     envVars:
       - key: SPRING_DATASOURCE_URL
         sync: false
