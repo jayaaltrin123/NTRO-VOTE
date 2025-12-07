@@ -19,7 +19,7 @@ function App() {
 
             {/* User Routes */}
             <Route element={<ProtectedRoute role="ROLE_USER" />}>
-              <Route path="/" element={<UserDashboard />} />
+              <Route path="/login" element={<UserDashboard />} />
               <Route path="/vote/:id" element={<ElectionVote />} />
             </Route>
 
@@ -29,7 +29,7 @@ function App() {
               <Route path="/admin/election/:id" element={<ManageElection />} />
             </Route>
 
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
         </div>
       </Router>
