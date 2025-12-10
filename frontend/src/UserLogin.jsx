@@ -23,7 +23,7 @@ const UserLogin = () => {
         try {
             const res = await api.post('/auth/verify-otp', { phone, code: otp });
             login(res.data.token);
-            navigate('/');
+            navigate('/dashboard');
         } catch (error) {
             alert('Invalid OTP');
         }

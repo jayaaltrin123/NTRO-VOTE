@@ -19,7 +19,7 @@ function App() {
 
             {/* User Routes */}
             <Route element={<ProtectedRoute role="ROLE_USER" />}>
-              <Route path="/login" element={<UserDashboard />} />
+              <Route path="/dashboard" element={<UserDashboard />} />
               <Route path="/vote/:id" element={<ElectionVote />} />
             </Route>
 

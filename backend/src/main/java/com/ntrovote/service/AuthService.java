@@ -58,53 +58,107 @@ public class AuthService {
     @Value("${twilio.phone_number}")
     private String twilioPhoneNumber;
 
+    // Helper to normalize phone numbers (simple version)
+    private String normalizePhone(String phone) {
+        if (phone == null)
+            return null;
+        String cleaned = phone.replaceAll("\\s+", ""); // remove spaces
+        if (!cleaned.startsWith("+")) {
+            return "+91" + cleaned; // Default to India +91 if no code
+        }
+        return cleaned;
+    }
+
     public void sendOtp(String phone) {
+        String normalizedPhone = normalizePhone(phone);
+
         // Check eligibility
-        if (!eligibleVoterRepository.existsByPhoneNumber(phone)) {
-            throw new RuntimeException("Phone number not eligible to vote");
+        if (!eligibleVoterRepository.existsByPhoneNumber(normalizedPhone)) {
+            // Also check raw just in case admin utilized raw number
+            if (!eligibleVoterRepository.existsByPhoneNumber(phone)) {
+                throw new RuntimeException("Phone number not eligible to vote");
+            } else {
+                // Admin used raw number, let's proceed with raw for consistency or update to
+                // normalized?
+                // For now, let's respect what's in DB for eligibility, but use normalized for
+                // SMS
+                normalizedPhone = phone;
+            }
         }
 
         // Generate 6-digit OTP
         String code = String.format("%06d", new Random().nextInt(999999));
 
         // Save to DB (overwrite existing)
-        Otp otp = new Otp(phone, code, LocalDateTime.now().plusMinutes(5));
+        Otp otp = new Otp(normalizedPhone, code, LocalDateTime.now().plusMinutes(5));
         otpRepository.save(otp);
 
         // Send SMS via Twilio
         try {
             String fromNumber = twilioPhoneNumber.startsWith("+") ? twilioPhoneNumber : "+" + twilioPhoneNumber;
-            String toNumber = phone.startsWith("+") ? phone : "+91" + phone; // Default to India +91
 
             com.twilio.Twilio.init(twilioAccountSid, twilioAuthToken);
             com.twilio.rest.api.v2010.account.Message.creator(
-                    new com.twilio.type.PhoneNumber(toNumber),
+                    new com.twilio.type.PhoneNumber(normalizedPhone),
                     new com.twilio.type.PhoneNumber(fromNumber),
                     "Your NtroVote OTP is: " + code).create();
-            System.out.println("SMS sent to " + phone);
+            System.out.println("SMS sent to " + normalizedPhone);
         } catch (Exception e) {
             System.err.println("Failed to send SMS: " + e.getMessage());
             // Fallback to console for development if SMS fails
-            System.out.println("OTP for " + phone + ": " + code);
+            System.out.println("OTP for " + normalizedPhone + ": " + code);
         }
     }
 
     public String verifyOtp(String phone, String code) {
-        Optional<Otp> otpOpt = otpRepository.findById(phone);
-        if (otpOpt.isEmpty() || !otpOpt.get().getCode().equals(code)) {
+        System.out.println("--- VERIFY OTP REQUEST ---");
+        System.out.println("Input Phone: " + phone);
+        System.out.println("Input Code: " + code);
+
+        String normalizedPhone = normalizePhone(phone);
+        System.out.println("Normalized Phone: " + normalizedPhone);
+
+        // Try finding by normalized first
+        Optional<Otp> otpOpt = otpRepository.findById(normalizedPhone);
+
+        // logic fallback: if not found, try raw
+        if (otpOpt.isEmpty()) {
+            System.out.println("Not found by normalized, trying raw: " + phone);
+            otpOpt = otpRepository.findById(phone);
+        }
+
+        if (otpOpt.isEmpty()) {
+            System.out.println("ERROR: OTP Record not found in DB.");
             throw new RuntimeException("Invalid OTP");
         }
 
-        if (otpOpt.get().getExpiresAt().isBefore(LocalDateTime.now())) {
+        Otp otp = otpOpt.get();
+        System.out.println("Found OTP Record -> Phone: " + otp.getPhone() + ", Code: " + otp.getCode() + ", Expires: "
+                + otp.getExpiresAt());
+
+        if (!otp.getCode().equals(code)) {
+            System.out.println("ERROR: Code mismatch. Expected: " + otp.getCode() + ", Got: " + code);
+            throw new RuntimeException("Invalid OTP");
+        }
+
+        if (otp.getExpiresAt().isBefore(LocalDateTime.now())) {
+            System.out.println("ERROR: OTP Expired. Now: " + LocalDateTime.now());
             throw new RuntimeException("OTP Expired");
         }
 
         // OTP Valid, clear it
-        otpRepository.delete(otpOpt.get());
+        otpRepository.delete(otp);
+        System.out.println("OTP Verified and Deleted.");
 
         // Create user if not exists
-        User user = userRepository.findByPhone(phone)
-                .orElseGet(() -> userRepository.save(new User(phone)));
+        final String finalPhone = otp.getPhone(); // Use the format that was verified
+        User user = userRepository.findByPhone(finalPhone)
+                .orElseGet(() -> {
+                    System.out.println("Creating new User for: " + finalPhone);
+                    return userRepository.save(new User(finalPhone));
+                });
+
+        System.out.println("User ID: " + user.getId());
 
         // Generate JWT
         return jwtUtil.generateToken(user.getPhone(), "ROLE_USER");
@@ -136,14 +190,23 @@ public class AuthService {
     }
 
     public EligibleVoter addEligibleVoter(String phone, String name) {
-        if (eligibleVoterRepository.existsByPhoneNumber(phone)) {
+        // We enforce storing eligible voters with +91 if possible for consistency,
+        // OR we just store what is given but normalized
+        String normalizedPhone = normalizePhone(phone);
+
+        if (eligibleVoterRepository.existsByPhoneNumber(normalizedPhone)) {
             throw new RuntimeException("Voter already eligible");
         }
-        return eligibleVoterRepository.save(new EligibleVoter(phone, name));
+        return eligibleVoterRepository.save(new EligibleVoter(normalizedPhone, name));
     }
 
     public void removeEligibleVoter(String phone) {
-        eligibleVoterRepository.deleteByPhoneNumber(phone);
+        String normalizedPhone = normalizePhone(phone);
+        if (eligibleVoterRepository.existsByPhoneNumber(normalizedPhone)) {
+            eligibleVoterRepository.deleteByPhoneNumber(normalizedPhone);
+        } else {
+            eligibleVoterRepository.deleteByPhoneNumber(phone);
+        }
     }
 
     public Map<String, Object> getVotingStatistics(Long electionId) {

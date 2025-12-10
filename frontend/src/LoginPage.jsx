@@ -23,8 +23,10 @@ const LoginPage = () => {
         try {
             await api.post('/auth/send-otp', { phone });
             setStep(2);
+            alert('OTP sent successfully! Please check your phone.');
         } catch (error) {
-            alert(error.response?.data?.error || 'Failed to send OTP');
+            const errorMessage = error.response?.data?.error || 'Failed to send OTP';
+            alert(errorMessage);
         }
     };
 
@@ -32,7 +34,7 @@ const LoginPage = () => {
         try {
             const res = await api.post('/auth/verify-otp', { phone, code: otp });
             login(res.data.token);
-            navigate('/');
+            navigate('/dashboard');
         } catch (error) {
             alert('Invalid OTP');
         }

@@ -17,8 +17,12 @@ public class AuthController {
     @PostMapping("/send-otp")
     public ResponseEntity<?> sendOtp(@RequestBody Map<String, String> request) {
         String phone = request.get("phone");
-        authService.sendOtp(phone);
-        return ResponseEntity.ok(Map.of("message", "OTP sent successfully"));
+        try {
+            authService.sendOtp(phone);
+            return ResponseEntity.ok(Map.of("message", "OTP sent successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
     }
 
     @PostMapping("/verify-otp")
